@@ -4,3 +4,4 @@ node_modules
 .vscode-test/
 *.vsix
 plugin.config.json
+test/services

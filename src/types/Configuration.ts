@@ -1,5 +1,5 @@
 import { OperationObject, SchemaObject } from 'openapi3-ts'
-import { APIDataType } from '.'
+import { APIDataType, ServiceTemplate } from '.'
 
 type ApiPrefixFn = (params: {
   /** 路径 */
@@ -49,13 +49,13 @@ export interface Configuration {
    */
   requestConfigTypeLibPath?: string
   /**
-   * service函数模板
-   * template1: request.post(url, data/params, config)
-   * template2: request.post(url, {data, params, ...config})
-   * template3: request(url, {method, data, params, ...config})
-   * @default "template1"
+   * service函数模板, 传入templatesFolder可自定义模板
+   * serviceController1: request(url, {method, data, params, ...config})
+   * serviceController2: request.post(url, {data, params, ...config})
+   * serviceController3: request.post(url, data/params, config)
+   * @default "serviceController1"
    */
-  serviceTemplate?: 'template1' | 'template2' | 'template3'
+  serviceTemplate?: ServiceTemplate
 
   /** 模板文件夹路径 */
   templatesFolder?: string
@@ -95,7 +95,7 @@ export interface Configuration {
   overrideMode?: 'all' | 'skip-same' | 'over-same'
 
   /**
-   * 分割类型文件
+   * 是否分割类型文件
    * @default true
    */
   splitDeclare?: boolean
@@ -109,9 +109,19 @@ export interface Configuration {
   /** 只生成includes中的方法 */
   includes?: Array<{ path: string; method: string }>
 
-  // interface 类型声明方式
+  /** interface 类型声明方式 */
   declareType?: 'type' | 'interface'
 
+  /**
+   * index文件的导出类型
+   * - merge：合并导出
+   * - alone：单独导出
+   * - all：全部导出
+   * @default 'merge'
+   */
+  exportType?: 'merge' | 'alone' | 'all'
+
+  /** 自定义hooks */
   hooks?: {
     /** 自定义类名 */
     customClassName?: (tagName: string) => string

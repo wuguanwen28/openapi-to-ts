@@ -1,12 +1,15 @@
-// @ts-ignore
-/* eslint-disable */
-{% for api in list -%}
-import * as {{ api.controllerName }} from './{{ api.fileName }}'
-{% endfor -%}
-
-
-export default {
+{%- if exportType !== 'alone' %}
   {% for api in list -%}
-  {{ api.controllerName }},
+    import * as {{ api.controllerName }} from './{{ api.fileName }}'
   {% endfor -%}
-}
+  export default {
+  {% for api in list -%}
+    {{ api.controllerName }},
+  {% endfor -%}
+  }
+{%- endif %}
+{% if exportType !== 'merge' %}
+  {%- for api in list %}
+    export * from './{{ api.fileName }}'
+  {%- endfor %}
+{%- endif %}

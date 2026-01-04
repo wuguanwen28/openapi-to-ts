@@ -10,7 +10,7 @@ export * from './init'
 export * from './generate'
 
 export class OpenapiCommand {
-  constructor(private command: CommandType) {}
+  constructor(private command: CommandType = 'generate') {}
 
   help = {
     run() {

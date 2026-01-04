@@ -1,37 +1,54 @@
 import prompts from 'prompts'
 import { getConfiguration, getOpenapiConfig, logger } from '../utils'
-import { Configuration } from '../types'
 import { ServiceGenerator } from '../generator/serviceGenerator'
+import { Configuration } from '../types'
+import { InitConfig } from './init'
+import chalk from 'chalk'
 
 export class GenerateService {
   config: Configuration
+  fileConfig: Configuration
+
   constructor(config: Configuration = {}) {
-    const defaultConfig = getConfiguration() || {}
-    this.config = { ...defaultConfig, ...config }
+    this.setConfig(config)
   }
+
+  setConfig(config: Configuration = {}) {
+    this.fileConfig = getConfiguration()
+    this.config = { ...(this.fileConfig || {}), ...config }
+  }
+
   async run() {
+    let { schemaPaths = [], schemaPath } = this.config
     try {
-      if (!this.config) return logger.error('请先初始化配置文件')
-      let { schemaPaths = [], schemaPath } = this.config
-      if (!schemaPath) {
-        if (schemaPaths.length === 1) {
-          schemaPath = schemaPaths[0].schemaPath
-        } else if (schemaPaths.length >= 2) {
-          const { selectedSchemaPath } = await prompts({
-            type: 'select',
-            name: 'selectedSchemaPath',
-            message: '请选择项目',
-            instructions: false,
-            choices: schemaPaths.map((item) => ({
-              title: `${item.label}（${item.schemaPath}）`,
-              value: item.schemaPath,
-            })),
-          })
-          schemaPath = selectedSchemaPath
-        }
+      if (!schemaPath && !schemaPaths?.length) {
+        let { confirm } = await prompts({
+          type: 'confirm',
+          name: 'confirm',
+          message: '未检测到配置文件，是否初始化配置文件？',
+          initial: true,
+        })
+        if (!confirm) return
+        const init = new InitConfig()
+        await init.run()
+        return
       }
 
-      if (!schemaPath) return logger.error('请选择项目')
+      if (!schemaPath && schemaPaths.length) {
+        const { selectedSchemaPath } = await prompts({
+          type: 'select',
+          name: 'selectedSchemaPath',
+          message: '请选择项目',
+          instructions: false,
+          choices: schemaPaths.map((item) => ({
+            title: `${item.label}（${item.schemaPath}）`,
+            value: item.schemaPath,
+          })),
+        })
+        schemaPath = selectedSchemaPath
+      }
+
+      if (!schemaPath) return logger.error(`请选择项目`)
 
       const openAPIData = await getOpenapiConfig(schemaPath)
       if (!openAPIData) {
@@ -46,14 +63,14 @@ export class GenerateService {
         {
           ...this.config,
           ...config,
-          schemaPath: undefined,
+          schemaPaths: undefined,
         },
         openAPIData,
       )
       await generator.genFile()
       logger.info('services 生成成功!', 'green', true)
     } catch (error) {
-      logger.error(error)
+      logger.error(error, chalk.bold.red('\npath:') + schemaPath)
       throw error
     }
   }

@@ -3,15 +3,15 @@ import { Configuration } from '../types'
 
 export const METHODS = ['get', 'put', 'post', 'delete', 'patch'] as const
 
-export const configStr = `/** @type {import('openapi-to-ts').Configuration} */
-export default {
-  openapi: 123,
-};`
-
 export const defaultConfig: Required<Configuration> = {
   label: '',
   schemaPath: '',
-  schemaPaths: [],
+  schemaPaths: [
+    {
+      label: 'opeiapi测试地址',
+      schemaPath: 'https://gw.alipayobjects.com/os/antfincdn/CA1dOm%2631B/openapi.json',
+    },
+  ],
   serversPath: './src/services',
   namespace: 'API',
   requestLibPath: '@/utils/request',
@@ -28,8 +28,12 @@ export const defaultConfig: Required<Configuration> = {
   isCamelCase: true,
   includes: [],
   declareType: 'interface',
+  exportType: 'merge',
   hooks: {},
 }
+
+export const configStr = `/** @type {import('@wgw/openapi-to-ts').Configuration} */
+export default ${JSON.stringify(defaultConfig, null, 2)};`
 
 export const DEFAULT_SCHEMA: SchemaObject = {
   type: 'object',

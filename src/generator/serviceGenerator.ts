@@ -118,12 +118,17 @@ export class ServiceGenerator {
   /** 生成请求方法 */
   async genServiceFile() {
     const serviceTp = this.getServiceTP()
-    const { namespace, requestLibPath, requestConfigType, requestConfigTypeLibPath } = this.config
+    const {
+      namespace,
+      serviceTemplate,
+      requestLibPath,
+      requestConfigType,
+      requestConfigTypeLibPath,
+    } = this.config
     for (const tp of serviceTp) {
-      const template: TypescriptFileType = 'serviceController3'
       const fileName = getFinalFileName(`${tp.className}.ts`)
       const requestImportStatement = getImportStatement(requestLibPath)
-      await this.genFileFromTemplate(fileName, template, {
+      await this.genFileFromTemplate(fileName, serviceTemplate, {
         namespace,
         requestConfigType,
         requestImportStatement,
@@ -316,6 +321,7 @@ export class ServiceGenerator {
     await this.genFileFromTemplate(`index.ts`, 'serviceIndex', {
       list: this.classNameList,
       disableTypeCheck: false,
+      exportType: this.config.exportType,
     })
   }
 
@@ -764,25 +770,19 @@ export class ServiceGenerator {
     type: TypescriptFileType,
     params: Record<string, any>,
   ): Promise<boolean> {
-    try {
-      const { overrideMode } = this.config
-      const filePath = path.join(this.finalPath, fileName)
-      const template = this.getTemplate(type)
-      nunjucks.configure({ autoescape: false })
-      const newContent = nunjucks.renderString(template, params)
-      const content = await mergeContent({
-        newContent,
-        filePath,
-        type,
-        overrideMode,
-      })
-      if (!content) return
-      await writeFile(filePath, content)
-      return true
-    } catch (error) {
-      logger.error(`生成文件失败: ${fileName}`, `type: ${type}`)
-      return false
-    }
+    const { overrideMode } = this.config
+    const filePath = path.join(this.finalPath, fileName)
+    const template = this.getTemplate(type)
+    nunjucks.configure({ autoescape: false })
+    const newContent = nunjucks.renderString(template, params)
+    const content = await mergeContent({
+      newContent,
+      filePath,
+      type,
+      overrideMode,
+    })
+    if (!content) return
+    await writeFile(filePath, content)
   }
 
   private getTemplate(type: TypescriptFileType): string {

@@ -3,8 +3,12 @@ import { logger } from './log'
 import * as fs from 'fs'
 import * as recast from 'recast'
 import {
+  ExportAllDeclaration,
+  ExportDefaultDeclaration,
   ExportNamedDeclaration,
   FunctionDeclaration,
+  ImportDeclaration,
+  ObjectExpression,
   Statement,
   File as TsAst,
   TSTypeAliasDeclaration,
@@ -34,13 +38,12 @@ export const mergeContent = async (options: {
     } else if (type.includes('serviceController')) {
       newContent = await mergeService(newAst, oldAst, isOverride)
     } else if (type === 'serviceIndex') {
-      // newContent = await mergeIndex(newAst, oldAst)
+      newContent = await mergeIndex(newAst, oldAst)
     }
 
     return newContent
   } catch (error) {
-    logger.error('合并代码出错', error, `\nfilePath: ${filePath}`)
-    throw error
+    throw new Error(`合并代码出错: ${error}`)
   }
 }
 
@@ -119,4 +122,93 @@ const mergeService = async (newAst: TsAst, oldAst: TsAst, isOverride?: boolean) 
 const mergeIndex = async (newAst: TsAst, oldAst: TsAst) => {
   let oldAstNode = oldAst?.program?.body
   let newAstNode = newAst?.program?.body
+
+  const isImportNode = (node: Statement): node is ImportDeclaration => {
+    return node.type == 'ImportDeclaration'
+  }
+  const isExportNode = (node: Statement): node is ExportDefaultDeclaration => {
+    return node.type == 'ExportDefaultDeclaration'
+  }
+  const isExportAllNode = (node: Statement): node is ExportAllDeclaration => {
+    return node.type === 'ExportAllDeclaration'
+  }
+
+  const importMap = {}
+  const exportMap = {}
+  let lastImportIndex = -1
+  let lastExportIndex = -1
+  let isHasExportDefault = false
+  let oldExportProperties: ObjectExpression['properties'] = []
+
+  // 记录导入模块的下标
+  oldAstNode.forEach((node, index) => {
+    if (isImportNode(node)) {
+      const name = node.specifiers[0].local.name
+      importMap[name] = index
+      lastImportIndex = index
+    }
+    if (isExportNode(node)) {
+      isHasExportDefault = true
+      if (node.declaration.type === 'ObjectExpression') {
+        oldExportProperties = node.declaration.properties
+      }
+    }
+    if (isExportAllNode(node)) {
+      const name = node.source.value
+      exportMap[name] = index
+      lastExportIndex = index
+    }
+  })
+
+  const oldExportPropertiesMap = oldExportProperties.reduce((obj, node, index) => {
+    if (node.type === 'ObjectProperty' && node.key.type === 'Identifier') {
+      let name = node.key.name
+      obj[name] = index
+    }
+    return obj
+  }, {})
+
+  newAstNode.forEach((node) => {
+    // 没有导入直接添加
+    if (isImportNode(node)) {
+      let name = node.specifiers[0].local.name
+      const index = importMap[name]
+      if (index === undefined) {
+        oldAstNode.splice(++lastImportIndex, 0, node)
+      }
+    }
+
+    // 处理默认导出语句
+    if (isExportNode(node)) {
+      // 没有默认导出语句直接使用新的
+      if (!isHasExportDefault) {
+        return oldAstNode.splice(++lastImportIndex, 0, node)
+      }
+
+      // 有默认导出语句，直接合并
+      if (node.declaration.type === 'ObjectExpression') {
+        let properties = node.declaration.properties
+        properties.forEach((property) => {
+          if (property.type === 'ObjectProperty' && property.key.type === 'Identifier') {
+            let name = property.key.name
+            let index = oldExportPropertiesMap[name]
+            if (index === undefined) {
+              oldExportProperties.push(property)
+            }
+          }
+        })
+      }
+    }
+
+    // 处理导出语句
+    if (isExportAllNode(node)) {
+      const name = node.source.value
+      const index = exportMap[name]
+      if (index === undefined) {
+        oldAstNode.splice(++lastExportIndex, 0, node)
+      }
+    }
+  })
+
+  return recast.print(oldAst).code
 }

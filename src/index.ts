@@ -1,2 +1,2 @@
+export type * from './types'
 export * from './commands/index'
-export type * from './types/Configuration'
