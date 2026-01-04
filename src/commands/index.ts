@@ -29,6 +29,8 @@ export class OpenapiCommand {
     const command = commandMap[this.command]
     if (command) return command.run()
 
-    logger.error(`命令不存在, 请运行 ${chalk.blue.bold('npx openapi help')} 查看帮助`)
+    logger.error(
+      `命令不存在, 请运行 ${chalk.blue.bold('npx openapi help')} 查看帮助`,
+    )
   }
 }

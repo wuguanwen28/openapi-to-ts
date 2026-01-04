@@ -75,7 +75,13 @@ export class ServiceGenerator {
 
   async init() {
     const paths = this.openAPIData.paths || {}
-    const { hooks = {}, isCamelCase, includes, serversPath, namespace } = this.config
+    const {
+      hooks = {},
+      isCamelCase,
+      includes,
+      serversPath,
+      namespace,
+    } = this.config
     const { customFileNames } = hooks
 
     this.finalPath = path.join(serversPath, namespace.toLowerCase())
@@ -243,7 +249,11 @@ export class ServiceGenerator {
 
             if (props.length > 0) {
               tagTypes[tag].push({
-                typeName: this.getTypeName({ ...api, method: api.method, path: api.path }),
+                typeName: this.getTypeName({
+                  ...api,
+                  method: api.method,
+                  path: api.path,
+                }),
                 type: 'Record<string, any>',
                 parent: undefined,
                 props: [props],
@@ -290,7 +300,9 @@ export class ServiceGenerator {
           }
         }
         if (api.responses) {
-          const response = this.resolveRefObject(api.responses['200'] || api.responses.default)
+          const response = this.resolveRefObject(
+            api.responses['200'] || api.responses.default,
+          )
           if (response?.content) {
             const mediaType = Object.keys(response.content)[0]
             const schema = response.content[mediaType]?.schema
@@ -368,7 +380,10 @@ export class ServiceGenerator {
                 (_, str, str2) => `$\{${str || str2}}`,
               )
 
-              if (newApi.extensions && newApi.extensions['x-antTech-description']) {
+              if (
+                newApi.extensions &&
+                newApi.extensions['x-antTech-description']
+              ) {
                 const { extensions } = newApi
                 const { apiName, antTechVersion, productCode, antTechApiName } =
                   extensions['x-antTech-description']
@@ -383,13 +398,18 @@ export class ServiceGenerator {
               }
 
               // 为 path 中的 params 添加 alias
-              const escapedPathParams = ((params || {}).path || []).map((ele, index) => ({
-                ...ele,
-                alias: `param${index}`,
-              }))
+              const escapedPathParams = ((params || {}).path || []).map(
+                (ele, index) => ({
+                  ...ele,
+                  alias: `param${index}`,
+                }),
+              )
               if (escapedPathParams.length) {
                 escapedPathParams.forEach((param) => {
-                  formattedPath = formattedPath.replace(`$\{${param.name}}`, `$\{${param.alias}}`)
+                  formattedPath = formattedPath.replace(
+                    `$\{${param.name}}`,
+                    `$\{${param.alias}}`,
+                  )
                 })
               }
 
@@ -419,7 +439,11 @@ export class ServiceGenerator {
 
                 if (!prefix) return formattedPath
 
-                if (prefix.startsWith("'") || prefix.startsWith('"') || prefix.startsWith('`')) {
+                if (
+                  prefix.startsWith("'") ||
+                  prefix.startsWith('"') ||
+                  prefix.startsWith('`')
+                ) {
                   const finalPrefix = prefix.slice(1, prefix.length - 1)
                   if (
                     formattedPath.startsWith(finalPrefix) ||
@@ -435,7 +459,9 @@ export class ServiceGenerator {
 
               if (isCamelCase) functionName = camelCase(functionName)
 
-              const defaultDescription = (newApi?.responses?.default as ResponseObject)?.description
+              const defaultDescription = (
+                newApi?.responses?.default as ResponseObject
+              )?.description
 
               return {
                 ...newApi,
@@ -455,14 +481,19 @@ export class ServiceGenerator {
                       : [
                           newApi.summary,
                           newApi.description,
-                          defaultDescription ? `返回值: ${defaultDescription}` : '',
+                          defaultDescription
+                            ? `返回值: ${defaultDescription}`
+                            : '',
                         ]
                           .filter((s) => s)
                           .join(' '),
-                hasHeader: !!(params && params.header) || !!(body && body.mediaType),
+                hasHeader:
+                  !!(params && params.header) || !!(body && body.mediaType),
                 params: finalParams,
                 hasParams: Boolean(
-                  Object.keys(finalParams || {}).filter((key) => key != 'header').length,
+                  Object.keys(finalParams || {}).filter(
+                    (key) => key != 'header',
+                  ).length,
                 ),
                 options: hooks?.customOptionsDefaultValue?.(newApi) || {},
                 body,
@@ -585,12 +616,13 @@ export class ServiceGenerator {
           .map((p) => this.resolveRefObject(p))
           .filter((p: ParameterObject) => p.in === source)
           .map((p) => {
-            const isDirectObject = ((p.schema || {}).type || p.type) === 'object'
+            const isDirectObject =
+              ((p.schema || {}).type || p.type) === 'object'
             const refList = ((p.schema || {}).$ref || p.$ref || '').split('/')
             const ref = refList[refList.length - 1]
-            const deRefObj = (Object.entries(this.openAPIData.components?.schemas || {}).find(
-              ([k]) => k === ref,
-            ) || []) as any
+            const deRefObj = (Object.entries(
+              this.openAPIData.components?.schemas || {},
+            ).find(([k]) => k === ref) || []) as any
             const isRefObject = (deRefObj[1] || {}).type === 'object'
             return {
               ...p,
@@ -632,12 +664,15 @@ export class ServiceGenerator {
     }
     let mediaType = Object.keys(reqContent)[0]
 
-    const schema = (reqContent[mediaType].schema || DEFAULT_SCHEMA) as SchemaObject
+    const schema = (reqContent[mediaType].schema ||
+      DEFAULT_SCHEMA) as SchemaObject
 
     if (mediaType === '*/*') mediaType = ''
 
     // 如果 requestBody 有 required 属性，则正常展示；如果没有，默认非必填
-    const required = isBoolean(requestBody.required) ? requestBody.required : false
+    const required = isBoolean(requestBody.required)
+      ? requestBody.required
+      : false
 
     if (schema.type === 'object' && schema.properties) {
       const propertiesList = Object.keys(schema.properties)
@@ -645,14 +680,17 @@ export class ServiceGenerator {
           if (
             schema.properties &&
             schema.properties[p] &&
-            !['binary', 'base64'].includes((schema.properties[p] as SchemaObject).format || '') &&
+            !['binary', 'base64'].includes(
+              (schema.properties[p] as SchemaObject).format || '',
+            ) &&
             !(
               ['string[]', 'array'].includes(
                 //@ts-ignore
                 (schema.properties[p] as SchemaObject).type || '',
               ) &&
               ['binary', 'base64'].includes(
-                ((schema.properties[p] as SchemaObject).items as SchemaObject).format || '',
+                ((schema.properties[p] as SchemaObject).items as SchemaObject)
+                  .format || '',
               )
             )
           ) {
@@ -660,7 +698,10 @@ export class ServiceGenerator {
               key: p,
               schema: {
                 ...schema.properties[p],
-                type: this.getType(schema.properties[p] as any, this.config.namespace),
+                type: this.getType(
+                  schema.properties[p] as any,
+                  this.config.namespace,
+                ),
                 required: schema.required?.includes(p) ?? false,
               },
             }
@@ -703,15 +744,22 @@ export class ServiceGenerator {
     if (!isObject(resContent) || !mediaType) {
       return defaultResponse
     }
-    let schema = (resContent[mediaType].schema || DEFAULT_SCHEMA) as SchemaObject
+    let schema = (resContent[mediaType].schema ||
+      DEFAULT_SCHEMA) as SchemaObject
 
     if (schema.$ref) {
       const refPaths = schema.$ref.split('/')
       const refName = refPaths[refPaths.length - 1]
       const childrenSchema = components?.schemas?.[refName] as SchemaObject
-      if (childrenSchema?.type === 'object' && 'properties' in childrenSchema && dataFields) {
+      if (
+        childrenSchema?.type === 'object' &&
+        'properties' in childrenSchema &&
+        dataFields
+      ) {
         schema =
-          dataFields.map((field) => childrenSchema?.properties?.[field]).filter(Boolean)?.[0] ||
+          dataFields
+            .map((field) => childrenSchema?.properties?.[field])
+            .filter(Boolean)?.[0] ||
           resContent[mediaType].schema ||
           (DEFAULT_SCHEMA as any)
       }
@@ -720,7 +768,8 @@ export class ServiceGenerator {
     if ('properties' in schema) {
       Object.keys(schema.properties || {}).map((fieldName) => {
         // @ts-ignore
-        schema.properties[fieldName]['required'] = schema.required?.includes(fieldName) ?? false
+        schema.properties[fieldName]['required'] =
+          schema.required?.includes(fieldName) ?? false
       })
     }
     return {
@@ -732,7 +781,9 @@ export class ServiceGenerator {
   getFileTP(requestBody: any = {}) {
     const reqBody: RequestBodyObject = this.resolveRefObject(requestBody)
     if (reqBody && reqBody.content && reqBody.content['multipart/form-data']) {
-      const ret = this.resolveFileTP(reqBody.content['multipart/form-data'].schema)
+      const ret = this.resolveFileTP(
+        reqBody.content['multipart/form-data'].schema,
+      )
       return ret.length > 0 ? ret : null
     }
     return null
@@ -787,7 +838,12 @@ export class ServiceGenerator {
 
   private getTemplate(type: TypescriptFileType): string {
     const { templatesFolder } = this.config
-    const filePath = path.join(__dirname, '../../', templatesFolder, `${type}.njk`)
+    const filePath = path.join(
+      __dirname,
+      '../../',
+      templatesFolder,
+      `${type}.njk`,
+    )
     return fs.readFileSync(filePath, 'utf8')
   }
 
@@ -797,15 +853,20 @@ export class ServiceGenerator {
     return schemaObject.properties
       ? Object.keys(schemaObject.properties).map((propName) => {
           const schema: SchemaObject =
-            (schemaObject.properties && schemaObject.properties[propName]) || DEFAULT_SCHEMA
+            (schemaObject.properties && schemaObject.properties[propName]) ||
+            DEFAULT_SCHEMA
           propName = propName.replace(/[\[|\]]/g, '')
           return {
             ...schema,
             name: propName,
             type: this.getType(schema),
-            desc: [schema.title, schema.description, schema.format].filter((s) => s).join(' '),
+            desc: [schema.title, schema.description, schema.format]
+              .filter((s) => s)
+              .join(' '),
             // 如果没有 required 信息，默认全部是非必填
-            required: requiredPropKeys ? requiredPropKeys.some((key) => key === propName) : false,
+            required: requiredPropKeys
+              ? requiredPropKeys.some((key) => key === propName)
+              : false,
           }
         })
       : []
@@ -822,7 +883,10 @@ export class ServiceGenerator {
   }
 
   // 获取类型（默认方式）
-  private defaultGetType(schemaObject: SchemaObject | undefined, namespace: string = ''): string {
+  private defaultGetType(
+    schemaObject: SchemaObject | undefined,
+    namespace: string = '',
+  ): string {
     if (!isValid(schemaObject)) return 'any'
 
     if (!isObject(schemaObject)) return schemaObject
@@ -865,7 +929,9 @@ export class ServiceGenerator {
 
       if (Array.isArray(items)) {
         const arrayItemType = (items as any)
-          .map((subType: any) => this.defaultGetType(subType.schema || subType, namespace))
+          .map((subType: any) =>
+            this.defaultGetType(subType.schema || subType, namespace),
+          )
           .toString()
         return `[${arrayItemType}]`
       }
@@ -878,7 +944,9 @@ export class ServiceGenerator {
         ? Array.from(
             new Set(
               schemaObject.enum.map((v) =>
-                isString(v) ? `"${v.replace(/"/g, '"')}"` : this.defaultGetType(v),
+                isString(v)
+                  ? `"${v.replace(/"/g, '"')}"`
+                  : this.defaultGetType(v),
               ),
             ),
           ).join(' | ')
@@ -919,7 +987,10 @@ export class ServiceGenerator {
             required = true
           }
 
-          if ('required' in (properties[key] || {}) && ((properties[key] || {}) as any).required) {
+          if (
+            'required' in (properties[key] || {}) &&
+            ((properties[key] || {}) as any).required
+          ) {
             required = true
           }
           /**
@@ -1012,7 +1083,9 @@ export class ServiceGenerator {
 
   private resolveAllOfObject(schemaObject: SchemaObject) {
     const props = (schemaObject.allOf || []).map((item) =>
-      item.$ref ? [{ ...item, type: this.getType(item).split('/').pop() }] : this.getProps(item),
+      item.$ref
+        ? [{ ...item, type: this.getType(item).split('/').pop() }]
+        : this.getProps(item),
     )
 
     if (schemaObject.properties) {
@@ -1053,14 +1126,18 @@ export class ServiceGenerator {
     return customFunctionName
       ? customFunctionName(data)
       : data.operationId
-        ? resolveFunctionName(stripDot(data.operationId), data.method as Methods)
+        ? resolveFunctionName(
+            stripDot(data.operationId),
+            data.method as Methods,
+          )
         : data.method + genDefaultFunctionName(data.path, pathBasePrefix)
   }
 
   public getTypeName(data: APIDataType) {
     let { namespace, hooks } = this.config
     namespace = namespace ? `${namespace}.` : ''
-    const typeName = hooks?.customTypeName?.(data) || this.getFuncationName(data)
+    const typeName =
+      hooks?.customTypeName?.(data) || this.getFuncationName(data)
 
     return resolveTypeName(`${namespace}${typeName ?? data.operationId}Params`)
   }

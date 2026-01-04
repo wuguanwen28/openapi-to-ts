@@ -135,9 +135,14 @@ export interface Configuration {
     customType?: (
       schemaObject: SchemaObject | undefined,
       namespace: string,
-      originGetType: (schemaObject: SchemaObject | undefined, namespace: string) => string,
+      originGetType: (
+        schemaObject: SchemaObject | undefined,
+        namespace: string,
+      ) => string,
     ) => string
     /** 自定义 options 默认值 */
-    customOptionsDefaultValue?: (data: OperationObject) => Record<string, any> | undefined
+    customOptionsDefaultValue?: (
+      data: OperationObject,
+    ) => Record<string, any> | undefined
   }
 }

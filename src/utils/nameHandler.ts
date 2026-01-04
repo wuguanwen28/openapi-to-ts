@@ -27,11 +27,14 @@ function getTypeLastName(typeName: string) {
 
   const childrenTypeName = tempTypeName?.match(/\[\[.+\]\]/g)?.[0]
   if (!childrenTypeName) {
-    let publicKeyToken = (tempTypeName.split('PublicKeyToken=')?.[1] ?? '').replace('null', '')
+    let publicKeyToken = (
+      tempTypeName.split('PublicKeyToken=')?.[1] ?? ''
+    ).replace('null', '')
     const firstTempTypeName = tempTypeName.split(',')?.[0] ?? tempTypeName
     let typeLastName = firstTempTypeName.split('/').pop().split('.').pop()
     if (typeLastName.endsWith('[]')) {
-      typeLastName = typeLastName.substring(0, typeLastName.length - 2) + 'Array'
+      typeLastName =
+        typeLastName.substring(0, typeLastName.length - 2) + 'Array'
     }
     // 特殊处理C#默认系统类型，不追加publicKeyToken
     const isCsharpSystemType = firstTempTypeName.startsWith('System.')
@@ -40,7 +43,9 @@ function getTypeLastName(typeName: string) {
     }
     return `${typeLastName}_${publicKeyToken}`
   }
-  const currentTypeName = getTypeLastName(tempTypeName.replace(childrenTypeName, ''))
+  const currentTypeName = getTypeLastName(
+    tempTypeName.replace(childrenTypeName, ''),
+  )
   const childrenTypeNameLastName = getTypeLastName(
     childrenTypeName.substring(2, childrenTypeName.length - 2),
   )
@@ -158,7 +163,9 @@ export function genDefaultFunctionName(path: string, pathBasePrefix: string) {
     .split('/')
     .map((s) => {
       if (s.includes('-')) {
-        s = s.replace(/(-\w)+/g, (_match: string, p1) => p1?.slice(1).toUpperCase())
+        s = s.replace(/(-\w)+/g, (_match: string, p1) =>
+          p1?.slice(1).toUpperCase(),
+        )
       }
 
       if (s.match(/^{.+}$/gim)) {

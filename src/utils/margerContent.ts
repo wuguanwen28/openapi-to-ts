@@ -47,7 +47,11 @@ export const mergeContent = async (options: {
   }
 }
 
-const mergeDeclare = async (newAst: TsAst, oldAst: TsAst, isOverride?: boolean) => {
+const mergeDeclare = async (
+  newAst: TsAst,
+  oldAst: TsAst,
+  isOverride?: boolean,
+) => {
   let oldAstNode = oldAst?.program?.body?.[0]
   let newAstNode = newAst?.program?.body?.[0]
   if (
@@ -88,12 +92,19 @@ const mergeDeclare = async (newAst: TsAst, oldAst: TsAst, isOverride?: boolean) 
   throw new Error('Declare文件合并失败')
 }
 
-const mergeService = async (newAst: TsAst, oldAst: TsAst, isOverride?: boolean) => {
+const mergeService = async (
+  newAst: TsAst,
+  oldAst: TsAst,
+  isOverride?: boolean,
+) => {
   let oldAstNode = oldAst?.program?.body || []
   let newAstNode = newAst?.program?.body || []
 
   const isFunctionNode = (node: Statement): node is ExportNamedDeclaration => {
-    return node.type == 'ExportNamedDeclaration' && node.declaration?.type == 'FunctionDeclaration'
+    return (
+      node.type == 'ExportNamedDeclaration' &&
+      node.declaration?.type == 'FunctionDeclaration'
+    )
   }
 
   const olwBodyMap = oldAstNode.reduce((obj, node, index) => {
@@ -160,13 +171,16 @@ const mergeIndex = async (newAst: TsAst, oldAst: TsAst) => {
     }
   })
 
-  const oldExportPropertiesMap = oldExportProperties.reduce((obj, node, index) => {
-    if (node.type === 'ObjectProperty' && node.key.type === 'Identifier') {
-      let name = node.key.name
-      obj[name] = index
-    }
-    return obj
-  }, {})
+  const oldExportPropertiesMap = oldExportProperties.reduce(
+    (obj, node, index) => {
+      if (node.type === 'ObjectProperty' && node.key.type === 'Identifier') {
+        let name = node.key.name
+        obj[name] = index
+      }
+      return obj
+    },
+    {},
+  )
 
   newAstNode.forEach((node) => {
     // 没有导入直接添加
@@ -189,7 +203,10 @@ const mergeIndex = async (newAst: TsAst, oldAst: TsAst) => {
       if (node.declaration.type === 'ObjectExpression') {
         let properties = node.declaration.properties
         properties.forEach((property) => {
-          if (property.type === 'ObjectProperty' && property.key.type === 'Identifier') {
+          if (
+            property.type === 'ObjectProperty' &&
+            property.key.type === 'Identifier'
+          ) {
             let name = property.key.name
             let index = oldExportPropertiesMap[name]
             if (index === undefined) {

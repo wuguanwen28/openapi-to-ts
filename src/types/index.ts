@@ -3,9 +3,16 @@ import { METHODS } from '../utils'
 
 export * from './Configuration'
 
-export type ServiceTemplate = 'serviceController1' | 'serviceController2' | 'serviceController3'
+export type ServiceTemplate =
+  | 'serviceController1'
+  | 'serviceController2'
+  | 'serviceController3'
 
-export type TypescriptFileType = 'interface' | 'serviceIndex' | ServiceTemplate | (string & {})
+export type TypescriptFileType =
+  | 'interface'
+  | 'serviceIndex'
+  | ServiceTemplate
+  | (string & {})
 
 export interface APIDataType extends OperationObject {
   path: string

@@ -9,7 +9,8 @@ export const defaultConfig: Required<Configuration> = {
   schemaPaths: [
     {
       label: 'opeiapi测试地址',
-      schemaPath: 'https://gw.alipayobjects.com/os/antfincdn/CA1dOm%2631B/openapi.json',
+      schemaPath:
+        'https://gw.alipayobjects.com/os/antfincdn/CA1dOm%2631B/openapi.json',
     },
   ],
   serversPath: './src/services',
@@ -17,7 +18,7 @@ export const defaultConfig: Required<Configuration> = {
   requestLibPath: '@/utils/request',
   requestConfigType: '{[key: string]: any}',
   requestConfigTypeLibPath: '',
-  serviceTemplate: 'template1',
+  serviceTemplate: 'serviceController1',
   templatesFolder: 'templates',
   nullable: false,
   enumStyle: 'string-literal',
@@ -32,8 +33,10 @@ export const defaultConfig: Required<Configuration> = {
   hooks: {},
 }
 
-export const configStr = `/** @type {import('@wgw/openapi-to-ts').Configuration} */
-export default ${JSON.stringify(defaultConfig, null, 2)};`
+export const configStr = `
+/** @type {import('@wgw/openapi-to-ts').Configuration} */
+export default ${JSON.stringify(defaultConfig, null, 2)};
+`
 
 export const DEFAULT_SCHEMA: SchemaObject = {
   type: 'object',
@@ -68,4 +71,11 @@ export const numberEnum = [
 
 export const dateEnum = ['Date', 'date', 'dateTime', 'date-time', 'datetime']
 
-export const stringEnum = ['string', 'email', 'password', 'url', 'byte', 'binary']
+export const stringEnum = [
+  'string',
+  'email',
+  'password',
+  'url',
+  'byte',
+  'binary',
+]
