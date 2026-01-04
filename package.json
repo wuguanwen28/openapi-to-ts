@@ -1,8 +1,10 @@
 {
-  "name": "openapi-to-ts",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "wgw-openapi-to-ts",
+  "version": "0.0.1",
+  "description": "将 OpenAPI 文档转换为 TypeScript 类型和接口方法",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
   "bin": {
     "openapi": "./bin/index.js"
   },
@@ -11,9 +13,18 @@
     "build": "tsc",
     "test": "cd ./test && node ./test.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "openapi",
+    "ts",
+    "typescript",
+    "generator"
+  ],
+  "author": "wuguanwen",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wuguanwen28/openapi-to-ts"
+  },
   "packageManager": "pnpm@10.17.0",
   "dependencies": {
     "@babel/parser": "^7.28.5",

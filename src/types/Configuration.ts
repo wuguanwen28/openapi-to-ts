@@ -17,7 +17,7 @@ export interface Configuration {
   label?: string
   /** swagger json 路径 */
   schemaPath?: string
-  /** 多个 swagger json 路径 */
+  /** 多个 swagger json 路径（ 每个项目都可以单独配置其他属性） */
   schemaPaths?: Array<Omit<Configuration, 'schemaPaths'>>
   /**
    * 生成的文件夹的路径
