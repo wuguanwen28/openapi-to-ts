@@ -1,6 +1,18 @@
 import { ParameterObject, SchemaObject } from 'openapi3-ts'
 import { Configuration } from '../types'
 
+const omit = <T extends Record<string, any>, K extends keyof T>(
+  obj: T,
+  keys: K[],
+): Omit<T, K> => {
+  const newObj = Object.keys(obj || {}).reduce((acc, key) => {
+    // @ts-ignore
+    if (!keys.includes(key as K)) acc[key] = obj[key]
+    return acc
+  }, {} as T)
+  return newObj
+}
+
 export const METHODS = ['get', 'put', 'post', 'delete', 'patch'] as const
 
 export const defaultConfig: Required<Configuration> = {
@@ -19,7 +31,7 @@ export const defaultConfig: Required<Configuration> = {
   requestConfigType: '{[key: string]: any}',
   requestConfigTypeLibPath: '',
   serviceTemplate: 'serviceController1',
-  templatesFolder: 'templates',
+  templatesFolder: '',
   nullable: false,
   enumStyle: 'string-literal',
   apiPrefix: '',
@@ -28,14 +40,25 @@ export const defaultConfig: Required<Configuration> = {
   splitDeclare: true,
   isCamelCase: true,
   includes: [],
-  declareType: 'interface',
+  declareType: 'type',
   exportType: 'merge',
   hooks: {},
 }
 
 export const configStr = `
-/** @type {import('@wgw/openapi-to-ts').Configuration} */
-export default ${JSON.stringify(defaultConfig, null, 2)};
+/** @type {import('wgw-openapi-to-ts').Configuration} */
+export default ${JSON.stringify(
+  omit(defaultConfig, [
+    'label',
+    'schemaPath',
+    'dataFields',
+    'templatesFolder',
+    'hooks',
+    'includes',
+  ]),
+  null,
+  2,
+)};
 `
 
 export const DEFAULT_SCHEMA: SchemaObject = {

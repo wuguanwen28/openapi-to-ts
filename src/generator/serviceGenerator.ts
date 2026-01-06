@@ -28,6 +28,7 @@ import {
   getBasePrefix,
   getFinalFileName,
   getImportStatement,
+  getProjectRoot,
   getRefName,
   getTagName,
   isArray,
@@ -87,7 +88,12 @@ export class ServiceGenerator {
     this.finalPath = path.join(serversPath, namespace.toLowerCase())
 
     this.includesMap = includes.reduce((obj, item) => {
-      obj[`${item.method}-${item.path}`] = true
+      const { method, path } = item || {}
+      if (path && method) {
+        obj[`${item.method}-${item.path}`] = true
+      } else if (path) {
+        obj[item.path] = true
+      }
       return obj
     }, {})
 
@@ -346,7 +352,7 @@ export class ServiceGenerator {
         const tmpFunctionRD: Record<string, number> = {}
         const genParams = this.apiData[tag]
           .filter((api) => {
-            if (!this.isInclude(api.method, api.path)) return false
+            if (!this.isInclude(api)) return false
             return !api.path.includes('${')
           })
           .map((api) => {
@@ -575,7 +581,7 @@ export class ServiceGenerator {
     Object.keys(this.apiData).forEach((tag) => {
       const tagApiData = this.apiData[tag]
       tagApiData.forEach((api) => {
-        if (!this.isInclude(api.method, api.method)) return
+        if (!this.isInclude(api)) return
         const props = []
         api.parameters
           ?.filter((item) => (item as ParameterObject)?.in !== 'header')
@@ -838,12 +844,14 @@ export class ServiceGenerator {
 
   private getTemplate(type: TypescriptFileType): string {
     const { templatesFolder } = this.config
-    const filePath = path.join(
-      __dirname,
-      '../../',
-      templatesFolder,
-      `${type}.njk`,
-    )
+
+    let filePath = ''
+    if (templatesFolder) {
+      filePath = path.resolve(templatesFolder, `${type}.njk`)
+    } else {
+      const rootPath = getProjectRoot()
+      filePath = path.join(rootPath, `./templates/${type}.njk`)
+    }
     return fs.readFileSync(filePath, 'utf8')
   }
 
@@ -1142,8 +1150,19 @@ export class ServiceGenerator {
     return resolveTypeName(`${namespace}${typeName ?? data.operationId}Params`)
   }
 
-  isInclude(method: string, path: string) {
+  isInclude(pathOrObj: string | APIDataType, method?: Methods) {
     const map = this.includesMap
-    return !Object.keys(map).length || map[`${method}-${path}`]
+    if (!Object.keys(map).length) return true
+
+    let path = ''
+    if (isString(pathOrObj)) {
+      path = pathOrObj
+    } else if (isObject(pathOrObj)) {
+      path = pathOrObj.path
+      if (!method) method = pathOrObj.method as any
+    }
+
+    if (map[path]) return map[path]
+    return !!map[`${method}-${path}`]
   }
 }

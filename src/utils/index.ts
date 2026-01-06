@@ -1,6 +1,7 @@
 import http from 'http'
 import https from 'https'
-import fetch from 'node-fetch'
+import nodeFetch from 'node-fetch'
+
 import * as fs from 'fs'
 import * as path from 'path'
 import * as prettier from 'prettier'
@@ -10,6 +11,7 @@ import { cosmiconfigSync } from 'cosmiconfig'
 import { logger } from './log'
 import { Configuration } from '../types'
 import { OpenAPIObject } from 'openapi3-ts'
+const fetch = typeof nodeFetch === 'function' ? nodeFetch : nodeFetch['default']
 
 export * from './log'
 export * from './config'
@@ -45,7 +47,7 @@ export function isInVSCodeExtension() {
 /** 获取项目的根目录 */
 export const getProjectRoot = () => {
   if (isInVSCodeExtension()) {
-    console.log('tode ==> ')
+    return process.env.WORKSPACE_FOLDER || process.cwd()
   }
   return process.cwd()
 }
@@ -114,11 +116,12 @@ const getSchema = async (schemaPath: string, authorization?: string) => {
       return json
     }
 
-    if (require.cache[schemaPath]) {
-      delete require.cache[schemaPath]
+    if (typeof require !== 'undefined') {
+      return require(schemaPath)
     }
-    const schema = require(schemaPath)
-    return schema
+
+    const res = await import(schemaPath)
+    return res.default
   } catch (error) {
     logger.error('获取Openapi配置失败', error)
     return null

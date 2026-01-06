@@ -19,15 +19,15 @@ export class OpenapiCommand {
     },
   }
 
-  async run() {
+  async run(command: CommandType = this.command) {
     const commandMap = {
       help: this.help,
       init: new InitConfig(),
       generate: new GenerateService(),
     }
 
-    const command = commandMap[this.command]
-    if (command) return command.run()
+    const instance = commandMap[command]
+    if (instance) return instance.run()
 
     logger.error(
       `命令不存在, 请运行 ${chalk.blue.bold('npx openapi help')} 查看帮助`,

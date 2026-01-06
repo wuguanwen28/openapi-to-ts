@@ -1,7 +1,7 @@
-import chalk, { ColorName } from 'chalk'
+import chalk from 'chalk'
 
 class Logger {
-  info(msg: string, color: ColorName = 'blue', isBold: boolean = false) {
+  info(msg: string, color: string = 'blue', isBold: boolean = false) {
     if (isBold) {
       console.log(chalk[color].bold(msg))
     } else {

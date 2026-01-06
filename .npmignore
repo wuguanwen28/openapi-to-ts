@@ -6,3 +6,4 @@ tsconfig.json
 prettier.config.js
 .gitignore
 .npmignore
+rollup.config.ts

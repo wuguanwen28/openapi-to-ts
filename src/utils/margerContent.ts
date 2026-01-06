@@ -1,8 +1,7 @@
 import { Configuration, TypescriptFileType } from '../types'
-import { logger } from './log'
 import * as fs from 'fs'
 import * as recast from 'recast'
-import {
+import type {
   ExportAllDeclaration,
   ExportDefaultDeclaration,
   ExportNamedDeclaration,
@@ -13,7 +12,7 @@ import {
   File as TsAst,
   TSTypeAliasDeclaration,
 } from '@babel/types'
-const tsParser = require('recast/parsers/typescript')
+import tsParser from 'recast/parsers/typescript'
 
 export const mergeContent = async (options: {
   newContent: string

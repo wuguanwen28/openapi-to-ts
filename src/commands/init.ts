@@ -1,5 +1,4 @@
 import * as path from 'path'
-import { type CosmiconfigResult, cosmiconfigSync } from 'cosmiconfig'
 import {
   getProjectRoot,
   prettierFile,
@@ -11,14 +10,17 @@ import {
 
 export class InitConfig {
   async run() {
+    const filePath = path.resolve(getProjectRoot(), './openapi.config.js')
+
     try {
-      if (getConfiguration()) return logger.error(`配置文件已存在`)
+      if (getConfiguration()) throw new Error(`配置文件已存在`)
       const content = await prettierFile(configStr)
-      const filePath = path.resolve(getProjectRoot(), './openapi.config.js')
       await writeFile(filePath, content)
-      logger.info(`配置文件已初始化：${path.basename(filePath)}`)
+      logger.info(`配置文件已初始化：${filePath}`)
+      return filePath
     } catch (error) {
       logger.error(error)
+      throw error
     }
   }
 }
