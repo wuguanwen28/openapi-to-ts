@@ -46,6 +46,31 @@ export const mergeContent = async (options: {
   }
 }
 
+const isTypeNode = (node: Statement): node is TSTypeAliasDeclaration => {
+  return [
+    'TSEnumDeclaration', // 枚举
+    'TSTypeAliasDeclaration', // type
+    'TSInterfaceDeclaration', // interface
+  ].includes(node.type)
+}
+
+const isFunctionNode = (node: Statement): node is ExportNamedDeclaration => {
+  return (
+    node.type == 'ExportNamedDeclaration' &&
+    node.declaration?.type == 'FunctionDeclaration'
+  )
+}
+
+const isImportNode = (node: Statement): node is ImportDeclaration => {
+  return node.type == 'ImportDeclaration'
+}
+const isExportNode = (node: Statement): node is ExportDefaultDeclaration => {
+  return node.type == 'ExportDefaultDeclaration'
+}
+const isExportAllNode = (node: Statement): node is ExportAllDeclaration => {
+  return node.type === 'ExportAllDeclaration'
+}
+
 const mergeDeclare = async (
   newAst: TsAst,
   oldAst: TsAst,
@@ -61,14 +86,6 @@ const mergeDeclare = async (
   ) {
     let oldBody = oldAstNode.body.body
     let newBody = newAstNode.body.body
-
-    const isTypeNode = (node: Statement): node is TSTypeAliasDeclaration => {
-      return [
-        'TSEnumDeclaration', // 枚举
-        'TSTypeAliasDeclaration', // type
-        'TSInterfaceDeclaration', // interface
-      ].includes(node.type)
-    }
 
     const olwBodyMap = oldBody.reduce((obj, node, index) => {
       if (isTypeNode(node)) obj[node.id.name] = index
@@ -99,30 +116,85 @@ const mergeService = async (
   let oldAstNode = oldAst?.program?.body || []
   let newAstNode = newAst?.program?.body || []
 
-  const isFunctionNode = (node: Statement): node is ExportNamedDeclaration => {
-    return (
-      node.type == 'ExportNamedDeclaration' &&
-      node.declaration?.type == 'FunctionDeclaration'
-    )
-  }
+  const importNameMap: Record<string, any> = {}
+  const importSourceMap: Record<string, any> = {}
 
-  const olwBodyMap = oldAstNode.reduce((obj, node, index) => {
+  const olwBodyMap = oldAstNode.reduce((obj, node) => {
     if (isFunctionNode(node)) {
       let functionName = (node.declaration as FunctionDeclaration).id?.name
-      obj[functionName] = index
+      obj[functionName] = node
+    }
+    if (isImportNode(node)) {
+      const source = node.source.value
+      importSourceMap[source] = node
+
+      node.specifiers?.forEach((spec: any) => {
+        importNameMap[spec.local.name] = node
+      })
     }
     return obj
   }, {})
 
-  newAstNode.forEach((newNode) => {
-    if (isFunctionNode(newNode)) {
-      let functionName = (newNode.declaration as FunctionDeclaration).id?.name
-      let index = olwBodyMap[functionName]
-      if (index === undefined) {
-        oldAstNode.push(newNode)
+  newAstNode.forEach((node) => {
+    if (isFunctionNode(node)) {
+      let functionName = (node.declaration as FunctionDeclaration).id?.name
+      let oldNode = olwBodyMap[functionName]
+      if (oldNode === undefined) {
+        oldAstNode.push(node)
       } else if (isOverride) {
-        oldAstNode.splice(index, 1, newNode)
+        const index = oldAstNode.indexOf(oldNode)
+        oldAstNode.splice(index, 1, node)
       }
+    }
+
+    if (isImportNode(node)) {
+      const newSource = node.source.value
+
+      // 相同 source → 直接合并
+      if (importSourceMap[newSource]) {
+        const existing = importSourceMap[newSource]
+
+        const existingNames = new Set(
+          existing.specifiers.map((s: any) => s.local.name),
+        )
+
+        node.specifiers?.forEach((spec: any) => {
+          if (!existingNames.has(spec.local.name)) {
+            existing.specifiers.push(spec)
+            importNameMap[spec.local.name] = existing
+          }
+        })
+
+        return
+      }
+
+      // 不同 source → 才做名称冲突删除
+      node.specifiers?.forEach((spec: any) => {
+        const name = spec.local.name
+
+        if (importNameMap[name]) {
+          const oldImportNode = importNameMap[name]
+
+          oldImportNode.specifiers = oldImportNode.specifiers.filter(
+            (s: any) => s.local.name !== name,
+          )
+
+          if (!oldImportNode.specifiers.length) {
+            const index = oldAstNode.indexOf(oldImportNode)
+            if (index !== -1) oldAstNode.splice(index, 1)
+          }
+
+          delete importNameMap[name]
+        }
+      })
+
+      // 新 source → 直接新增
+      oldAstNode.unshift(node)
+      importSourceMap[newSource] = node
+
+      node.specifiers?.forEach((spec: any) => {
+        importNameMap[spec.local.name] = node
+      })
     }
   })
 
@@ -132,16 +204,6 @@ const mergeService = async (
 const mergeIndex = async (newAst: TsAst, oldAst: TsAst) => {
   let oldAstNode = oldAst?.program?.body
   let newAstNode = newAst?.program?.body
-
-  const isImportNode = (node: Statement): node is ImportDeclaration => {
-    return node.type == 'ImportDeclaration'
-  }
-  const isExportNode = (node: Statement): node is ExportDefaultDeclaration => {
-    return node.type == 'ExportDefaultDeclaration'
-  }
-  const isExportAllNode = (node: Statement): node is ExportAllDeclaration => {
-    return node.type === 'ExportAllDeclaration'
-  }
 
   const importMap = {}
   const exportMap = {}

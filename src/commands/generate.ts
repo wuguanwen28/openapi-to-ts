@@ -50,28 +50,24 @@ export class GenerateService {
 
       if (!schemaPath) return logger.error(`请选择项目`)
 
-      const openAPIData = await getOpenapiConfig(schemaPath)
-      if (!openAPIData) {
-        throw new Error('获取 openapi 数据失败，请检查路径是否有效')
-      }
-
       const config = schemaPaths.find((item) => {
         return schemaPath === item.schemaPath
       })
 
-      const generator = new ServiceGenerator(
-        {
-          ...this.config,
-          ...config,
-          schemaPaths: undefined,
-        },
-        openAPIData,
-      )
-      await generator.genFile()
+      this.generate({ ...this.config, ...config, schemaPath })
+
       logger.info('services 生成成功!', 'green', true)
     } catch (error) {
       logger.error(error, chalk.bold.red('\npath:') + schemaPath)
       throw error
     }
+  }
+
+  async generate(config: Configuration = this.config) {
+    const openAPIData = await getOpenapiConfig(config.schemaPath)
+    if (!openAPIData) throw new Error('获取数据失败，请检查路径是否有效')
+
+    const generator = new ServiceGenerator(config, openAPIData)
+    await generator.genFile()
   }
 }

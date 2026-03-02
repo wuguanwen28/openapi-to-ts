@@ -1,6 +1,6 @@
 {
   "name": "wgw-openapi-to-ts",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "将 OpenAPI 文档转换为 TypeScript 类型和接口方法",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "rollup -c rollup.config.ts --configPlugin typescript -w",
     "build": "rollup -c rollup.config.ts --configPlugin typescript",
-    "test": "cd ./test && node ./test.js"
+    "test": "node ./test/test.js"
   },
   "keywords": [
     "openapi",
